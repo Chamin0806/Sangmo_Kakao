@@ -8,6 +8,22 @@ from datetime import datetime #yy mm dd 사용
 
 app = Flask(__name__)
 
+yy = datetime.today().year
+mm = datetime.today().month
+dd = datetime.today().day
+
+source_L = requests.get(f"http://school.gyo6.net/sangmohs/food/{yy}/{mm}/{dd}/dinner").text
+soup_L = BeautifulSoup(source_L, "html.parser")
+hotKeys_L = soup_L.select('div')[1].text
+if hotKeys_L == "\n":
+    hotKeys_L = "구성된 식단이 없음!"
+
+source_D = requests.get(f"http://school.gyo6.net/sangmohs/food/{yy}/{mm}/{dd}/dinner").text
+soup_D = BeautifulSoup(source_D, "html.parser")
+hotKeys_D = soup_D.select('div')[1].text
+if hotKeys_D == "\n":
+    hotKeys_D = "구성된 식단이 없음!"
+
 
 
 
@@ -21,7 +37,7 @@ def Message():
     mm = datetime.today().month
     dd = datetime.today().day
 
-    source_L = requests.get(f"http://school.gyo6.net/sangmohs/food/{yy}/{mm}/{dd}/dinner").text
+    source_L = requests.get(f"http://school.gyo6.net/sangmohs/food/{yy}/{mm}/{dd}/lunch").text
     #requests datetime모듈을 이용해 파싱할 웹 페이지를 .text(문자열)형식으로 저장.
     soup_L = BeautifulSoup(source_L, "html.parser")
     #source에서 html소스로 파싱해야한다고 옵션을 정하고 soup_L에 대입.
@@ -41,39 +57,17 @@ def Message():
     content = content['userRequest']
     content = content['utterance']
 
-    if content == u"밥" or content == u"급식":
-        dataSend = {
-            "version": "2.0",
-            "template": {
-                "outputs": [
-                    {
-                        "carousel": {
-                            "type" : "basicCard",
-                            "items": [
-                                {
-                                    "title" : "",
-                                    "description" : f"{yy}년 {mm}월 {dd}일 식단표 입니다.\n\n점심: {hotKeys_L} \n저녁: {hotKeys_D}"
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-        }
-    else :
-        dataSend = {
-            "version": "2.0",
-            "template": {
-                "outputs": [
-                    {
-                        "simpleText":{
-                            "text" : "알수없는 명령어 입니다.""
-                        }
-                    }
-                ]
-            }
-        }
+    dataSend = {
+        "version": "2.0",
+        "data": {
+            "lunch_menu":hotKeys_L,
+            "dinner_menu":hotKeys_D,
+            "dd" : dd,
+            "mm" : mm,
+            "yy" : yy
+  }
+    }
     return jsonify(dataSend)
-    
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8888)
